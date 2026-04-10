@@ -13,10 +13,17 @@ let resolveReady = null;
 let currentResolve = null;
 let currentLines = [];
 
-function createStockfish() {
+async function createStockfish() {
+  // Fetch the script, create a Blob URL to bypass CORS Worker restriction
+  const response = await fetch(STOCKFISH_CDN);
+  if (!response.ok) throw new Error('Failed to fetch Stockfish from CDN');
+  const scriptText = await response.text();
+  const blob = new Blob([scriptText], { type: 'application/javascript' });
+  const blobUrl = URL.createObjectURL(blob);
+
   return new Promise((resolve, reject) => {
     try {
-      const worker = new Worker(STOCKFISH_CDN);
+      const worker = new Worker(blobUrl);
 
       worker.onmessage = (e) => {
         const line = typeof e.data === 'string' ? e.data : e.data?.data || '';
